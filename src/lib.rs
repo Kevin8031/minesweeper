@@ -3,6 +3,7 @@ use std::ops::RangeInclusive;
 use rand::Rng;
 use serde::{Serialize, Deserialize};
 
+/// Contains the game's settings
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameOpts {
     width: usize,
@@ -39,6 +40,7 @@ impl Default for GameOpts {
     }
 }
 
+/// Rappresents a single cell in the map
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Cell {
     bomb: bool,
@@ -74,6 +76,7 @@ pub struct Game {
 }
 
 impl Game {
+    /// Prints the map to stdout
     pub fn print_map(&self) {
         for x in 0..self.opts.width {
             for y in 0..self.opts.height {
@@ -93,22 +96,38 @@ impl Game {
         }
     }
     
+    /// Calculates the number of nearby
+    /// mines of all cell on the map
     fn calculate_mines_count(map: &mut Vec<Cell>, opts: &GameOpts) {
-        for x in 0..opts.width() {
-            for y in 0..opts.height() {
-                let index = x * opts.width() + y;  // calculate index
+        for x in 0..opts.width() {                  //
+            for y in 0..opts.height() {             // iterate throught all the map
 
-                if !map[index].mine() {
-                    let mut x_range = -1..=1;
-                    if x == 0 { x_range = 0..=1; }
-                    else if x == opts.width() - 1 { x_range = -1..=0; }
+                let index = x * opts.width() + y;   // calculate index
+                
+                if !map[index].mine() {                     // skip the current cell if it
+                                                            // it already contains a mine
+
+                    // Cycle throught the surrounding cells:
+                    let mut x_range = -1..=1;          // start by going from the cell
+                                                                            // before to the one after the
+                                                                            // current cell.
+
+                    if x == 0 { x_range = 0..=1; }                          // If there is no cell before the
+                                                                            // current one just start from the
+                                                                            // current one ...
+
+                    else if x == opts.width() - 1 { x_range = -1..=0; }     // ... and if there is no cell after
+                                                                            // the current one stop at the current
+                                                                            // one
+
                     for x_offset in x_range {
+                        /* same thing but for y */
                         let mut y_range = -1..=1;
                         if y == 0 { y_range = 0..=1; }
                         else if y == opts.height() - 1 { y_range = -1..=0; }
-                        
-                        for y_offset in y_range {
+                        /**/
 
+                        for y_offset in y_range {
                             let x_cell = (x as i32 + x_offset) as usize;
                             let y_cell = (y as i32 + y_offset) as usize;
     
@@ -123,10 +142,20 @@ impl Game {
             }
         }
     }
+
+    /// Generates a new map
     fn generate_map(game_opts: &GameOpts) -> Vec<Cell> {
-        let mut mines_total = game_opts.mines_percentage().unwrap_or_else(|| game_opts.mines_count());
+        // if a mines percentage is provided calculate
+        // the total amount of mines from that, otherwise
+        // use the value direcly
+        let mut mines_total = if let Some(mines_percentage) = game_opts.mines_percentage() {
+            (game_opts.width * game_opts.height) * mines_percentage / 100
+        } else {
+            game_opts.mines_count()
+        };
 
         let mut map = vec![Cell::new(); game_opts.width() * game_opts.height()];
+        // generate mines
         while mines_total > 0 {
             let x = rand::thread_rng().gen_range(0..game_opts.width());
             let y = rand::thread_rng().gen_range(0..game_opts.height());       
@@ -136,12 +165,12 @@ impl Game {
         
             mines_total -= 1;
         }
-
         Self::calculate_mines_count(&mut map, &game_opts);
 
         map
     }
 
+    /// Returns a new Game instance
     pub fn new(game_opts: &GameOpts) -> Game {
         let map = Self::generate_map(&game_opts);
         Game { opts: game_opts.clone(), map }
