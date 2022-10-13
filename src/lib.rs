@@ -44,7 +44,7 @@ impl Default for GameOpts {
 }
 
 /// Handles the state of a cell
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum CellState {
     Closed,
     Open,
@@ -52,7 +52,7 @@ pub enum CellState {
 }
 
 /// Rappresents a single cell in the map
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Cell {
     bomb: bool,
     nearby_mines: usize,
@@ -196,17 +196,27 @@ impl Game {
         let cell = self.get_cell(target_index);
 
         match cell.state {
-            CellState::Closed => None,
+            CellState::Closed => Some(Vec::new()),
             CellState::Open => {
                 if cell.mine() {
                     // Game Over
                     None
                 } else {
-                    self.check_empty_cells(target_index, &mut vec![]);
-                    None
+                    let mut vec = Vec::new();
+                    if let Some(empty_cells) = self.check_empty_cells(target_index, &mut vec![]) {
+                        empty_cells.iter()
+                            .for_each(|x| {
+                                vec.push((*x, self.get_cell(*x)));
+                            }
+                        );
+                    }
+                    
+                    vec.push((target_index, cell));
+
+                    Some(vec)
                 }
             },
-            CellState::Marked => None,
+            CellState::Marked => Some(Vec::new()),
         }
     }
 
