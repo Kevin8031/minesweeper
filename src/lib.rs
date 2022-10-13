@@ -68,7 +68,7 @@ impl Cell {
         self.bomb = true;
     }
 
-    pub fn add_nearby_mine(&mut self) {
+    fn add_nearby_mine(&mut self) {
         self.nearby_mines += 1;
     }
 
@@ -78,6 +78,10 @@ impl Cell {
 
     pub fn nearby_mines(&self) -> usize {
         self.nearby_mines
+    }
+
+    pub fn state(&self) -> &CellState {
+        &self.state
     }
 }
 
@@ -237,7 +241,7 @@ impl Game {
                     let y_cell = (y as i32 + y_offset) as usize;
 
                     let next_index = x_cell * self.opts.width() + y_cell;
-
+                    
                     if !past_index.contains(&next_index) {
                         match self.check_empty_cells(
                             next_index,
