@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use std::ops::RangeInclusive;
 
 use rand::Rng;
@@ -40,16 +43,25 @@ impl Default for GameOpts {
     }
 }
 
+/// Handles the state of a cell
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum CellState {
+    Closed,
+    Open,
+    Marked,
+}
+
 /// Rappresents a single cell in the map
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Cell {
     bomb: bool,
-    nearby_mines: usize
+    nearby_mines: usize,
+    state: CellState
 }
 
 impl Cell {
     pub fn new() -> Cell {
-        Cell { bomb: false, nearby_mines: 0 }
+        Cell { bomb: false, nearby_mines: 0, state: CellState::Closed }
     }
 
     pub fn set_bomb(&mut self) {
@@ -144,7 +156,7 @@ impl Game {
     }
 
     /// Generates a new map
-    fn generate_map(game_opts: &GameOpts) -> Vec<Cell> {
+    fn generate_map(game_opts: &mut GameOpts) -> Vec<Cell> {
         // if a mines percentage is provided calculate
         // the total amount of mines from that, otherwise
         // use the value direcly
@@ -153,6 +165,7 @@ impl Game {
         } else {
             game_opts.mines_count()
         };
+        game_opts.mines_count = mines_total;
 
         let mut map = vec![Cell::new(); game_opts.width() * game_opts.height()];
         // generate mines
@@ -171,50 +184,70 @@ impl Game {
     }
 
     /// Returns a new Game instance
-    pub fn new(game_opts: &GameOpts) -> Game {
-        let map = Self::generate_map(&game_opts);
-        Game { opts: game_opts.clone(), map }
+    pub fn new(mut game_opts: GameOpts) -> Game {
+        let map = Self::generate_map(&mut game_opts);
+        Game { opts: game_opts, map }
     }
 
     /// Returns the cell if target
     /// cell isn't a mine. Otherwise
     /// return none
-    pub fn check_move(&self, target_index: usize, past_index: &mut Option<&Vec<usize>>) -> Option<Vec<(usize, &Cell)>> {
-        let mut a = match past_index {
-            Some(a) => a.to_vec(),
-            None => Vec::new(),
-        };
-
+    pub fn check_move(&self, target_index: usize) -> Option<Vec<(usize, &Cell)>> {
         let cell = self.get_cell(target_index);
-        if cell.mine() {
-            // Game Over
-            None
-        } else {
-            let x = target_index / self.opts.width;
-            let y = target_index / self.opts.height;
-            let mut vec = Vec::new();
-            
-            if cell.nearby_mines == 0 {
-                for x_offset in self.nearby_range_x(x) {
-                    'here: for y_offset in self.nearby_range_y(y) {
-                        let x_cell = (x as i32 + x_offset) as usize;
-                        let y_cell = (y as i32 + y_offset) as usize;
-                        let index = x_cell * self.opts.width() + y_cell;
- 
-                        if index == target_index { a.push(index); continue; }
-                        
-                        for i in &a {
-                            if *i == target_index { continue 'here; }
+
+        match cell.state {
+            CellState::Closed => None,
+            CellState::Open => {
+                if cell.mine() {
+                    // Game Over
+                    None
+                } else {
+                    self.check_empty_cells(target_index, &mut vec![]);
+                    None
+                }
+            },
+            CellState::Marked => None,
+        }
+    }
+
+    fn check_empty_cells(&self, target_index: usize, past_index: &mut Vec<usize>) -> Option<Vec<usize>> {
+        // TODO
+        let cell = self.get_cell(
+            target_index
+        );
+        
+        let x = target_index / self.opts.width();
+        let y = target_index / self.opts.height();
+
+        if cell.nearby_mines == 0 {
+            past_index.push(target_index);
+            for x_offset in self.nearby_range_x(x) {
+                for y_offset in self.nearby_range_y(y) {
+                    let x_cell = (x as i32 + x_offset) as usize;
+                    let y_cell = (y as i32 + y_offset) as usize;
+
+                    let next_index = x_cell * self.opts.width() + y_cell;
+
+                    if !past_index.contains(&next_index) {
+                        match self.check_empty_cells(
+                            next_index,
+                            past_index
+                        ) {
+                            Some(nearby_cell) => {
+                                nearby_cell.iter().for_each(
+                                    |x| if !past_index.contains(x) {
+                                        past_index.push(*x);
+                                    }
+                                );
+                            },
+                            None => {}
                         }
-                        
-                        self.check_move(index, &mut Some(&a));
                     }
                 }
-            } else {
-                vec.push((target_index, cell));
             }
-            
-            Some(vec)
+            return Some(past_index.clone())
+        } else {
+            return None
         }
     }
 
