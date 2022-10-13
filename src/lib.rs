@@ -61,7 +61,7 @@ pub struct Cell {
 
 impl Cell {
     pub fn new() -> Cell {
-        Cell { bomb: false, nearby_mines: 0, state: CellState::Closed }
+        Cell { bomb: false, nearby_mines: 0, state: CellState::Open }
     }
 
     pub fn set_bomb(&mut self) {
