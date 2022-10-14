@@ -215,7 +215,9 @@ impl Game {
                         );
                     }
                     
-                    vec.push((target_index, cell));
+                    if !vec.contains(&(target_index, cell)) {
+                        vec.push((target_index, cell));
+                    }
 
                     Some(vec)
                 }
@@ -261,7 +263,12 @@ impl Game {
             }
             return Some(past_index.clone())
         } else {
-            return None
+            if cell.mine() {
+                return None
+            } else {
+                past_index.push(target_index);
+                return Some(past_index.clone());
+            }
         }
     }
 

@@ -118,6 +118,7 @@ fn cell_recursion_check_3_mines() {
     let game = preset_3x3_3mines();
 
     let expected_result = vec![
+        2,
         4,
         5,
         6,
