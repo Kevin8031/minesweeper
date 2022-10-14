@@ -264,12 +264,7 @@ impl Game {
             }
             return Some(past_index.clone())
         } else {
-            if cell.mine() {
-                return None
-            } else {
-                past_index.push(target_index);
-                return Some(past_index.clone());
-            }
+            return None
         }
     }
 
