@@ -52,7 +52,7 @@ fn draw_menu(term: &Term) -> io::Result<()> {
     Ok(())
 }
 
-fn draw_game(term: &Term, game: Game) -> io::Result<()> {
+fn draw_game(term: &Term, mut game: Game) -> io::Result<()> {
     const EMPTY_CELL: &str = "[ ]";
     const HIGHLIGHTED_CELL: &str = "[*]";
     const MARKED_CELL: &str = "[?]";
@@ -78,9 +78,9 @@ fn draw_game(term: &Term, game: Game) -> io::Result<()> {
                 if index == selection {
                     print!("{}", HIGHLIGHTED_CELL);
                 } else {
-                    match cell.state() {
+                    match cell.state().to_owned() {
                         minesweeper::CellState::Closed => {
-                            print!("{}", format!("{}", closed.apply_to(EMPTY_CELL)));
+                            print!("{}", format!("[{}]", closed.apply_to(cell.nearby_mines())));
                         },
                         minesweeper::CellState::Open => {
                             print!("{}", EMPTY_CELL);
@@ -101,6 +101,11 @@ fn draw_game(term: &Term, game: Game) -> io::Result<()> {
             Key::ArrowLeft => if x > 0 { x -= 1},
             Key::ArrowDown => y = cmp::min(y + 1, map_height - 1),
             Key::ArrowRight => x = cmp::min(x + 1, map_width - 1),
+            Key::Enter => {
+                if !game.check_move(selection) {
+                    return Ok(())
+                }
+            },
             _ => {}
         }
 

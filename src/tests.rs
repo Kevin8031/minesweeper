@@ -134,24 +134,16 @@ fn cell_recursion_check_3_mines() {
 
 #[test]
 fn move_check_on_mine() {
-    let game = preset_3x3_3mines();
+    let mut game = preset_3x3_3mines();
 
-    assert_eq!(game.check_move(0), None);
-    assert_eq!(game.check_move(1), None);
-    assert_eq!(game.check_move(3), None);
+    assert_eq!(game.check_move(0), false);
+    assert_eq!(game.check_move(1), false);
+    assert_eq!(game.check_move(3), false);
 }
 
 #[test]
 fn move_check_not_on_mine() {
-    let game = preset_3x3_3mines();
+    let mut game = preset_3x3_3mines();
 
-    assert_eq!(game.check_move(2), Some(
-        vec![(2usize,
-            &Cell {
-                bomb: false,
-                nearby_mines: 1,
-                state: CellState::Open,
-            },
-        )]
-    ));
+    assert_eq!(game.check_move(2), true);
 }

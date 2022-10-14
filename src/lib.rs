@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-use std::ops::RangeInclusive;
+use std::{ops::RangeInclusive};
 
 use rand::Rng;
 use serde::{Serialize, Deserialize};
@@ -193,36 +193,37 @@ impl Game {
         Game { opts: game_opts, map }
     }
 
-    /// Returns the cell if target
+    /// Returns true if the target
     /// cell isn't a mine. Otherwise
-    /// return none
-    pub fn check_move(&self, target_index: usize) -> Option<Vec<(usize, &Cell)>> {
+    /// return false
+    pub fn check_move(&mut self, target_index: usize) -> bool {
         let cell = self.get_cell(target_index);
+        let state = cell.state.clone();
 
-        match cell.state {
-            CellState::Closed => Some(Vec::new()),
+        match state {
+            CellState::Closed => true,
             CellState::Open => {
                 if cell.mine() {
                     // Game Over
-                    None
+                    false
                 } else {
                     let mut vec = Vec::new();
                     if let Some(empty_cells) = self.check_empty_cells(target_index, &mut vec![]) {
                         empty_cells.iter()
                             .for_each(|x| {
-                                vec.push((*x, self.get_cell(*x)));
+                                vec.push(*x);
                             }
                         );
                     }
-                    
-                    if !vec.contains(&(target_index, cell)) {
-                        vec.push((target_index, cell));
+                    for index in vec {
+                        self.map[index].state = CellState::Closed;
                     }
+                    self.map[target_index].state = CellState::Closed;
 
-                    Some(vec)
+                    true
                 }
             },
-            CellState::Marked => Some(Vec::new()),
+            CellState::Marked => true,
         }
     }
 
