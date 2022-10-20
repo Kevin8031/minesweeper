@@ -9,10 +9,10 @@ use serde::{Serialize, Deserialize};
 /// Contains the game's settings
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameOpts {
-    width: usize,
-    height: usize,
-    mines_count: usize,
-    mines_percentage: Option<usize>
+    pub width: usize,
+    pub height: usize,
+    pub mines_count: usize,
+    pub mines_percentage: Option<usize>
 }
 
 impl GameOpts {
@@ -30,22 +30,6 @@ impl GameOpts {
     
     pub fn new(width: usize, height: usize, mines_count: usize, mines_percentage: Option<usize>) -> GameOpts {
         GameOpts { width, height, mines_count, mines_percentage }
-    }
-
-    pub fn width(&self) -> usize {
-        self.width
-    }
-
-    pub fn height(&self) -> usize {
-        self.height
-    }
-
-    pub fn mines_percentage(&self) -> Option<usize> {
-        self.mines_percentage
-    }
-
-    pub fn mines_count(&self) -> usize {
-        self.mines_count
     }
 }
 
@@ -99,7 +83,7 @@ impl Cell {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Game {
-    opts: GameOpts,
+    pub opts: GameOpts,
     map: Vec<Cell>
 }
 
@@ -127,10 +111,10 @@ impl Game {
     /// Calculates the number of nearby
     /// mines of all cell on the map
     fn calculate_mines_count(map: &mut Vec<Cell>, opts: &GameOpts) {
-        for x in 0..opts.width() {                  //
-            for y in 0..opts.height() {             // iterate throught all the map
+        for x in 0..opts.width {                  //
+            for y in 0..opts.height {             // iterate throught all the map
 
-                let index = x * opts.width() + y;   // calculate index
+                let index = x * opts.width + y;   // calculate index
                 
                 if !map[index].mine() {                     // skip the current cell if it
                                                             // it already contains a mine
@@ -144,7 +128,7 @@ impl Game {
                                                                             // current one just start from the
                                                                             // current one ...
 
-                    else if x == opts.width() - 1 { x_range = -1..=0; }     // ... and if there is no cell after
+                    else if x == opts.width - 1 { x_range = -1..=0; }     // ... and if there is no cell after
                                                                             // the current one stop at the current
                                                                             // one
 
@@ -152,16 +136,16 @@ impl Game {
                         /* same thing but for y */
                         let mut y_range = -1..=1;
                         if y == 0 { y_range = 0..=1; }
-                        else if y == opts.height() - 1 { y_range = -1..=0; }
+                        else if y == opts.height - 1 { y_range = -1..=0; }
                         /**/
 
                         for y_offset in y_range {
                             let x_cell = (x as i32 + x_offset) as usize;
                             let y_cell = (y as i32 + y_offset) as usize;
     
-                            let check_index = x_cell * opts.width() + y_cell;
+                            let check_index = x_cell * opts.width + y_cell;
                         
-                            if check_index < opts.width() * opts.height() && check_index != index {
+                            if check_index < opts.width * opts.height && check_index != index {
                                 if map[check_index].mine() { map[index].add_nearby_mine(); }
                             }
                         }
@@ -176,20 +160,20 @@ impl Game {
         // if a mines percentage is provided calculate
         // the total amount of mines from that, otherwise
         // use the value direcly
-        let mut mines_total = if let Some(mines_percentage) = game_opts.mines_percentage() {
+        let mut mines_total = if let Some(mines_percentage) = game_opts.mines_percentage {
             (game_opts.width * game_opts.height) * mines_percentage / 100
         } else {
-            game_opts.mines_count()
+            game_opts.mines_count
         };
         game_opts.mines_count = mines_total;
 
-        let mut map = vec![Cell::new(); game_opts.width() * game_opts.height()];
+        let mut map = vec![Cell::new(); game_opts.width * game_opts.height];
         // generate mines
         while mines_total > 0 {
-            let x = rand::thread_rng().gen_range(0..game_opts.width());
-            let y = rand::thread_rng().gen_range(0..game_opts.height());       
+            let x = rand::thread_rng().gen_range(0..game_opts.width);
+            let y = rand::thread_rng().gen_range(0..game_opts.height);       
 
-            let index = x * game_opts.width() + y;
+            let index = x * game_opts.width + y;
             map[index].set_bomb();
         
             mines_total -= 1;
@@ -245,8 +229,8 @@ impl Game {
             target_index
         );
         
-        let x = target_index / self.opts.width();
-        let y = target_index / self.opts.height();
+        let x = target_index / self.opts.width;
+        let y = target_index / self.opts.height;
 
         if cell.nearby_mines == 0 {
             past_index.push(target_index);
@@ -255,7 +239,7 @@ impl Game {
                     let x_cell = (x as i32 + x_offset) as usize;
                     let y_cell = (y as i32 + y_offset) as usize;
 
-                    let next_index = x_cell * self.opts.width() + y_cell;
+                    let next_index = x_cell * self.opts.width + y_cell;
                     
                     if !past_index.contains(&next_index) {
                         match self.check_empty_cells(
@@ -284,14 +268,10 @@ impl Game {
         &self.map[index]
     }
 
-    pub fn opts(&self) -> &GameOpts {
-        &self.opts
-    }
-
     fn nearby_range_x(&self, x: usize) -> RangeInclusive<i32> {
         let mut x_range = -1..=1;
         if x == 0 { x_range = 0..=1; }
-        else if x == self.opts.width() - 1 { x_range = -1..=0; }
+        else if x == self.opts.width - 1 { x_range = -1..=0; }
 
         x_range
     }
@@ -299,7 +279,7 @@ impl Game {
     fn nearby_range_y(&self, y: usize) -> RangeInclusive<i32> {
         let mut y_range = -1..=1;
         if y == 0 { y_range = 0..=1; }
-        else if y == self.opts.height() - 1 { y_range = -1..=0; }
+        else if y == self.opts.height - 1 { y_range = -1..=0; }
 
         y_range
     }

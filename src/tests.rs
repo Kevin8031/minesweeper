@@ -71,7 +71,7 @@ fn map_generation() {
     let game = Game::new(game_opts);
 
     assert_eq!(game.map.len(), 64);
-    assert_eq!(game.opts.mines_count(), 16);
+    assert_eq!(game.opts.mines_count, 16);
 }
 
 #[test]

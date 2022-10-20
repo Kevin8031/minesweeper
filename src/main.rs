@@ -59,8 +59,8 @@ fn draw_game(term: &Term, mut game: Game) -> io::Result<()> {
     
     let closed = Style::new().color256(64);
     
-    let map_height = game.opts().height();
-    let map_width = game.opts().width();
+    let map_height = game.opts.height;
+    let map_width = game.opts.width;
 
     let mut selection = 0;
 
