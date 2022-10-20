@@ -292,3 +292,9 @@ impl Game {
         y_range
     }
 }
+
+impl Default for Game {
+    fn default() -> Self {
+        Self { opts: Default::default(), map: Default::default() }
+    }
+}
