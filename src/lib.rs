@@ -16,6 +16,18 @@ pub struct GameOpts {
 }
 
 impl GameOpts {
+    pub fn preset_8x8_10_mines() -> GameOpts {
+        GameOpts { width: 8, height: 8, mines_count: 10, mines_percentage: None }
+    }
+
+    pub fn preset_16x16_40_mines() -> GameOpts {
+        GameOpts { width: 16, height: 16, mines_count: 40, mines_percentage: None }
+    }
+
+    pub fn preset_30x16_40_mines() -> GameOpts {
+        GameOpts { width: 30, height: 16, mines_count: 99, mines_percentage: None }
+    }
+    
     pub fn new(width: usize, height: usize, mines_count: usize, mines_percentage: Option<usize>) -> GameOpts {
         GameOpts { width, height, mines_count, mines_percentage }
     }
